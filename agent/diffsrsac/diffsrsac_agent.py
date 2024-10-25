@@ -335,6 +335,9 @@ class DIFFSRSACAgent(SACAgent):
 
         # Update the frozen target models
         self.update_target()
+        '''
+        update the target function
+        '''
 
         return {
             **feature_info,

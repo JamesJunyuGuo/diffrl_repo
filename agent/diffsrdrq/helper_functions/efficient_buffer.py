@@ -34,7 +34,7 @@ def _worker_init_fn(worker_id):
 class EfficientReplayBuffer(AbstractReplayBuffer):
     def __init__(self, buffer_size, batch_size, nstep, discount, frame_stack,
                  data_specs=None):
-        self.buffer_size = buffer_size
+        self.buffer_size = int(buffer_size/100)
         self.data_dict = {}
         self.index = -1
         self.traj_index = 0

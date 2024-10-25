@@ -121,6 +121,8 @@ class Workspace():
         all_returns = []
         all_success = []
         self.agent.train(False)
+        # print("Total eval episodes",self.args.eval_episodes)
+        self.args.eval_episodes = 2
         for i_episode in range(self.args.eval_episodes):
             time_step = self.eval_env.reset()
             length = ret = success = 0
@@ -133,6 +135,7 @@ class Workspace():
                 length += 1
                 if hasattr(time_step, "success"):
                     success += float(time_step.success)
+            print("save video")
             self.video_recorder.save(f"eval_{self.global_frame}.mp4")
             all_lengths.append(length)
             all_returns.append(ret)
@@ -156,7 +159,6 @@ class Workspace():
             self.video_recorder.record(self.eval_env)
         self.video_recorder.save(f"train_{self.global_frame}.mp4")
         
-        # do reconstruction validation
         if self.global_step > 0:
             agent_metrics, grid = self.agent.evaluate(self.replay_iter)
             metrics.update(agent_metrics)
@@ -169,8 +171,12 @@ class Workspace():
         episode_step, episode_return, episode_success = 0, 0, 0
         time_step = self.train_env.reset()
         self.replay_buffer.add(time_step)
-        for i_frame in trange(args.num_train_frames // args.action_repeat + 1, desc="main"):
+        print("Finish Replay")
+        print("-----------------")
+   
+        for i_frame in trange(100 // args.action_repeat + 1, desc="main"):
             if time_step.last():
+                print("Time lasts")
                 self._global_episode += 1
                 episode_frame = episode_step * args.action_repeat
                 self.logger.log_scalars("", {
@@ -185,6 +191,7 @@ class Workspace():
 
             if self.global_frame < args.warmup_frames:
                 sample = self.train_env.action_spec().generate_value()
+    
                 action = np.random.uniform(low=-1, high=1, size=sample.shape)
                 action = action.astype(sample.dtype)
                 train_metrics = {}
@@ -209,8 +216,11 @@ class Workspace():
 
             if self.global_frame % args.eval_frames == 0:
                 eval_metrics = self.eval()
+            
                 self.logger.log_scalars("eval", eval_metrics, step=self.global_frame)
                 self.logger.info(eval_metrics)
+                
+    
 
             time_step = self.train_env.step(action)
             episode_return += time_step.reward
@@ -229,4 +239,6 @@ if __name__ == "__main__":
     if args.wandb.activate: 
         wandb.login(key=os.environ["wandb_api_key"])
     workspace = Workspace(args)
+    print("Start training")
+    print("--------------------------")
     workspace.train()
